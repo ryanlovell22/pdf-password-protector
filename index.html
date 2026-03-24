@@ -3,20 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PDF Password Protector</title>
+  <title>Document Password Protector</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>PDF Password Protector</h1>
-      <p class="subtitle">Protect your PDFs with a password — entirely in your browser.</p>
+      <h1>Document Password Protector</h1>
+      <p class="subtitle">Password-protect your PDFs and Word documents.</p>
       <p class="privacy-badge">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M8 1L2 4v4c0 3.5 2.6 6.8 6 7.5 3.4-.7 6-4 6-7.5V4L8 1z" fill="currentColor" opacity="0.2" stroke="currentColor" stroke-width="1.2"/>
           <path d="M6 8l1.5 1.5L10.5 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Your files never leave your browser
+        PDFs encrypted in your browser. Word docs processed securely on our server.
       </p>
     </header>
 
@@ -28,14 +28,14 @@
             <path d="M24 32V16m0 0l-6 6m6-6l6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M8 32v4a4 4 0 004 4h24a4 4 0 004-4v-4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          <p>Drag & drop PDFs here</p>
-          <p class="drop-zone-hint">Max 5 files, 50MB each</p>
+          <p>Drag & drop files here</p>
+          <p class="drop-zone-hint">PDF or Word — max 5 files</p>
           <button type="button" id="browse-btn" class="btn-browse">Browse Files</button>
         </div>
-        <input type="file" id="file-input" accept=".pdf,application/pdf" multiple hidden>
+        <input type="file" id="file-input" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple hidden>
       </div>
       <noscript>
-        <p class="error-message" style="margin-top:1rem">JavaScript is required. Please make sure you're accessing this page via <code>http://localhost:8080</code>, not by opening the HTML file directly.</p>
+        <p class="error-message" style="margin-top:1rem">JavaScript is required. Please make sure you're accessing this page via a web server, not by opening the HTML file directly.</p>
       </noscript>
 
       <div id="file-list" class="file-list" hidden>
@@ -65,7 +65,7 @@
           <rect x="3" y="9" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.5"/>
           <path d="M6 9V6a4 4 0 018 0v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
-        Protect PDFs
+        Protect Files
       </button>
     </section>
 
@@ -84,14 +84,14 @@
           <circle cx="16" cy="16" r="12" fill="#22c55e" opacity="0.15"/>
           <path d="M11 16l3.5 3.5L21 13" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <p id="success-text">All PDFs protected!</p>
+        <p id="success-text">All files protected!</p>
       </div>
       <button id="download-btn" class="btn-primary btn-download">
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M10 3v10m0 0l-4-4m4 4l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M3 14v2a2 2 0 002 2h10a2 2 0 002-2v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Download Protected PDFs
+        Download Protected Files
       </button>
       <button id="reset-btn" class="btn-secondary">Start Over</button>
     </section>
