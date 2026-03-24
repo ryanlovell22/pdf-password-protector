@@ -20,7 +20,6 @@ const resetBtn = document.getElementById('reset-btn');
 const errorMessage = document.getElementById('error-message');
 
 // --- State ---
-const MAX_FILES = 5;
 const MAX_SIZE_PDF = 50 * 1024 * 1024; // 50MB for PDFs (client-side)
 const MAX_SIZE_DOCX = 4.5 * 1024 * 1024; // 4.5MB for DOCX (Vercel limit)
 const ALLOWED_EXTENSIONS = ['.pdf', '.docx'];
@@ -124,10 +123,6 @@ function handleFiles(fileListInput) {
   const newFiles = Array.from(fileListInput);
 
   for (const file of newFiles) {
-    if (selectedFiles.length >= MAX_FILES) {
-      showError(`Maximum ${MAX_FILES} files allowed.`);
-      break;
-    }
     if (!isAllowedFile(file)) {
       showError(`"${file.name}" is not a supported file type. Use PDF or DOCX.`);
       continue;
