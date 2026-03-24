@@ -48,14 +48,18 @@
       <label for="password-input" class="input-label">Password</label>
       <div class="password-wrapper">
         <input type="password" id="password-input" placeholder="Enter a password" autocomplete="new-password">
-        <button type="button" id="toggle-password" class="toggle-password" aria-label="Show password">
-          <svg id="eye-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <button type="button" id="copy-password" class="password-action-btn" aria-label="Copy password" title="Copy password" hidden>
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="6" y="6" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M12 6V4.5A1.5 1.5 0 0010.5 3h-6A1.5 1.5 0 003 4.5v6A1.5 1.5 0 004.5 12H6" stroke="currentColor" stroke-width="1.3"/></svg>
+        </button>
+        <button type="button" id="toggle-password" class="password-action-btn" aria-label="Show password">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M10 4C4 4 1 10 1 10s3 6 9 6 9-6 9-6-3-6-9-6z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             <circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.5"/>
           </svg>
         </button>
       </div>
       <div id="password-strength" class="password-strength"></div>
+      <button type="button" id="generate-password" class="btn-generate">Generate strong password</button>
     </section>
 
     <!-- Step 3: Action -->
@@ -86,6 +90,7 @@
         </svg>
         <p id="success-text">All files protected!</p>
       </div>
+      <div id="results-list" class="results-list" hidden></div>
       <button id="download-btn" class="btn-primary btn-download">
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M10 3v10m0 0l-4-4m4 4l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>

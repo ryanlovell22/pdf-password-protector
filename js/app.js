@@ -7,6 +7,8 @@ const fileList = document.getElementById('file-list');
 const passwordSection = document.getElementById('password-section');
 const passwordInput = document.getElementById('password-input');
 const togglePasswordBtn = document.getElementById('toggle-password');
+const copyPasswordBtn = document.getElementById('copy-password');
+const generatePasswordBtn = document.getElementById('generate-password');
 const passwordStrength = document.getElementById('password-strength');
 const actionSection = document.getElementById('action-section');
 const protectBtn = document.getElementById('protect-btn');
@@ -16,15 +18,18 @@ const progressText = document.getElementById('progress-text');
 const downloadSection = document.getElementById('download-section');
 const downloadBtn = document.getElementById('download-btn');
 const successText = document.getElementById('success-text');
+const resultsList = document.getElementById('results-list');
 const resetBtn = document.getElementById('reset-btn');
 const errorMessage = document.getElementById('error-message');
 
 // --- State ---
-const MAX_SIZE_PDF = 50 * 1024 * 1024; // 50MB for PDFs (client-side)
-const MAX_SIZE_DOCX = 4.5 * 1024 * 1024; // 4.5MB for DOCX (Vercel limit)
+const MAX_SIZE_PDF = 50 * 1024 * 1024;
+const MAX_SIZE_DOCX = 4.5 * 1024 * 1024;
 const ALLOWED_EXTENSIONS = ['.pdf', '.docx'];
 let selectedFiles = [];
 let encryptedResults = [];
+let fileResults = []; // per-file tracking: {name, success, error}
+let isProcessing = false;
 
 // --- Helpers ---
 function getExtension(filename) {
@@ -40,8 +45,7 @@ function isDOCX(file) {
 }
 
 function isAllowedFile(file) {
-  const ext = getExtension(file.name);
-  return ALLOWED_EXTENSIONS.includes(ext);
+  return ALLOWED_EXTENSIONS.includes(getExtension(file.name));
 }
 
 function getMaxSize(file) {
@@ -102,9 +106,7 @@ dropZone.addEventListener('dragover', (e) => {
 dropZone.addEventListener('dragleave', (e) => {
   e.preventDefault();
   e.stopPropagation();
-  if (e.target === dropZone) {
-    dropZone.classList.remove('drag-over');
-  }
+  if (e.target === dropZone) dropZone.classList.remove('drag-over');
 });
 
 dropZone.addEventListener('drop', (e) => {
@@ -186,6 +188,41 @@ togglePasswordBtn.addEventListener('click', () => {
 
 passwordInput.addEventListener('input', () => {
   updateStrength();
+  copyPasswordBtn.hidden = passwordInput.value.length === 0;
+  updateUI();
+});
+
+// Enter key triggers encryption
+passwordInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !protectBtn.disabled && !isProcessing) {
+    protectBtn.click();
+  }
+});
+
+// Copy password
+copyPasswordBtn.addEventListener('click', async (e) => {
+  e.stopPropagation();
+  try {
+    await navigator.clipboard.writeText(passwordInput.value);
+    copyPasswordBtn.classList.add('copied');
+    setTimeout(() => copyPasswordBtn.classList.remove('copied'), 1500);
+  } catch {
+    // Fallback for older browsers
+    passwordInput.select();
+    document.execCommand('copy');
+  }
+});
+
+// Generate password
+generatePasswordBtn.addEventListener('click', () => {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%&*';
+  const array = new Uint32Array(14);
+  crypto.getRandomValues(array);
+  const password = Array.from(array, (n) => chars[n % chars.length]).join('');
+  passwordInput.value = password;
+  passwordInput.type = 'text'; // show it so user can see what was generated
+  copyPasswordBtn.hidden = false;
+  updateStrength();
   updateUI();
 });
 
@@ -216,13 +253,16 @@ function updateUI() {
 
   passwordSection.hidden = !hasFiles;
   actionSection.hidden = !hasFiles;
-  protectBtn.disabled = !hasFiles || !hasPassword;
+  protectBtn.disabled = !hasFiles || !hasPassword || isProcessing;
 
   hideError();
 }
 
 // --- Protect action ---
 protectBtn.addEventListener('click', async () => {
+  if (isProcessing) return; // double-click guard
+  isProcessing = true;
+  protectBtn.disabled = true;
   hideError();
   const password = passwordInput.value;
 
@@ -234,7 +274,7 @@ protectBtn.addEventListener('click', async () => {
   dropZone.style.pointerEvents = 'none';
 
   encryptedResults = [];
-  let errors = 0;
+  fileResults = [];
 
   for (const file of selectedFiles) {
     progressText.textContent = `Encrypting ${file.name}...`;
@@ -249,6 +289,7 @@ protectBtn.addEventListener('click', async () => {
           name: protectedName,
           blob: new Blob([encrypted], { type: 'application/pdf' }),
         });
+        fileResults.push({ name: file.name, success: true });
       } else if (isDOCX(file)) {
         encrypted = await protectDOCX(file, password);
         const protectedName = file.name.replace(/\.docx$/i, '_protected.docx');
@@ -256,51 +297,75 @@ protectBtn.addEventListener('click', async () => {
           name: protectedName,
           blob: new Blob([encrypted], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }),
         });
+        fileResults.push({ name: file.name, success: true });
       }
     } catch (err) {
       console.error(`Error encrypting ${file.name}:`, err);
-      errors++;
+      fileResults.push({ name: file.name, success: false, error: err.message });
     }
 
-    const progress = ((encryptedResults.length + errors) / selectedFiles.length) * 100;
+    const progress = (fileResults.length / selectedFiles.length) * 100;
     progressBar.style.width = `${progress}%`;
   }
 
+  isProcessing = false;
+
   if (encryptedResults.length === 0) {
-    showError('Failed to encrypt any files. They may be corrupted or already encrypted.');
+    showError('Failed to encrypt any files. See details below.');
     progressSection.hidden = true;
     actionSection.hidden = false;
     passwordSection.hidden = false;
     dropZone.style.pointerEvents = '';
+    protectBtn.disabled = false;
+    renderResults();
     return;
   }
 
   progressSection.hidden = true;
   downloadSection.hidden = false;
 
-  if (errors > 0) {
-    successText.textContent = `${encryptedResults.length} of ${selectedFiles.length} files protected (${errors} failed)`;
+  const failures = fileResults.filter(r => !r.success).length;
+  if (failures > 0) {
+    successText.textContent = `${encryptedResults.length} of ${selectedFiles.length} files protected`;
   } else {
     successText.textContent = selectedFiles.length === 1
       ? 'File protected!'
       : `All ${encryptedResults.length} files protected!`;
   }
 
+  renderResults();
+
   // Auto-download all protected files
   for (const result of encryptedResults) {
     triggerDownload(result.blob, result.name);
   }
 
-  // Update button text for manual re-download
+  // Update button for manual re-download
   if (encryptedResults.length === 1) {
-    downloadBtn.textContent = `Download again`;
+    downloadBtn.textContent = 'Download again';
   } else {
     downloadBtn.innerHTML = `
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 3v10m0 0l-4-4m4 4l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 14v2a2 2 0 002 2h10a2 2 0 002-2v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Download again (${encryptedResults.length} files)
-    `
+    `;
   }
 });
+
+// --- Results list ---
+function renderResults() {
+  if (fileResults.length === 0 || fileResults.every(r => r.success)) {
+    resultsList.hidden = true;
+    return;
+  }
+
+  resultsList.hidden = false;
+  resultsList.innerHTML = fileResults.map(r => {
+    if (r.success) {
+      return `<div class="result-item success"><span class="result-icon">&#10003;</span><span class="result-name">${escapeHtml(r.name)}</span></div>`;
+    }
+    return `<div class="result-item failure"><span class="result-icon">&#10007;</span><span class="result-name">${escapeHtml(r.name)}</span><span class="result-error">${escapeHtml(r.error)}</span></div>`;
+  }).join('');
+}
 
 // --- Download ---
 function triggerDownload(blob, filename) {
@@ -321,13 +386,14 @@ downloadBtn.addEventListener('click', () => {
   }
 });
 
-// --- Reset ---
+// --- Reset (sticky password) ---
 resetBtn.addEventListener('click', () => {
   selectedFiles = [];
   encryptedResults = [];
-  passwordInput.value = '';
-  passwordStrength.innerHTML = '';
+  fileResults = [];
+  // Password is intentionally NOT cleared — sticky between batches
   renderFileList();
+  resultsList.hidden = true;
   downloadSection.hidden = true;
   progressSection.hidden = true;
   dropZone.style.pointerEvents = '';

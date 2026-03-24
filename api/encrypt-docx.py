@@ -13,7 +13,6 @@ class handler(BaseHTTPRequestHandler):
                 self._error(400, "Expected multipart/form-data")
                 return
 
-            # Parse multipart form data
             form = cgi.FieldStorage(
                 fp=self.rfile,
                 headers=self.headers,
@@ -23,13 +22,11 @@ class handler(BaseHTTPRequestHandler):
                 },
             )
 
-            # Get password
             password_field = form.getvalue("password")
             if not password_field:
                 self._error(400, "Missing password")
                 return
 
-            # Get file
             file_field = form["file"]
             if not hasattr(file_field, "file"):
                 self._error(400, "Missing file")
@@ -40,17 +37,32 @@ class handler(BaseHTTPRequestHandler):
                 self._error(400, "Empty file")
                 return
 
-            # Encrypt the document
+            # Check if already encrypted
             input_stream = io.BytesIO(file_bytes)
-            output_stream = io.BytesIO()
+            try:
+                office_file = msoffcrypto.OfficeFile(input_stream)
+            except Exception:
+                self._error(
+                    400,
+                    "This file does not appear to be a valid Word document.",
+                )
+                return
 
-            office_file = msoffcrypto.OfficeFile(input_stream)
-            office_file.load_key(password=password_field)
-            office_file.encrypt(password_field, output_stream)
+            if office_file.is_encrypted():
+                self._error(400, "This document is already password-protected.")
+                return
+
+            # Encrypt
+            output_stream = io.BytesIO()
+            try:
+                office_file.load_key(password=password_field)
+                office_file.encrypt(password_field, output_stream)
+            except Exception as e:
+                self._error(500, f"Encryption failed: {str(e)}")
+                return
 
             encrypted_bytes = output_stream.getvalue()
 
-            # Return encrypted file
             self.send_response(200)
             self.send_header("Content-Type", "application/octet-stream")
             self.send_header("Content-Length", str(len(encrypted_bytes)))
@@ -58,7 +70,7 @@ class handler(BaseHTTPRequestHandler):
             self.wfile.write(encrypted_bytes)
 
         except Exception as e:
-            self._error(500, f"Encryption failed: {str(e)}")
+            self._error(500, f"Unexpected error: {str(e)}")
 
     def _error(self, code, message):
         self.send_response(code)
