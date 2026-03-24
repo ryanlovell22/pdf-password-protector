@@ -278,21 +278,27 @@ protectBtn.addEventListener('click', async () => {
   progressSection.hidden = true;
   downloadSection.hidden = false;
 
-  if (encryptedResults.length === 1) {
-    downloadBtn.textContent = `Download ${encryptedResults[0].name}`;
-  } else {
-    downloadBtn.innerHTML = `
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 3v10m0 0l-4-4m4 4l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 14v2a2 2 0 002 2h10a2 2 0 002-2v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Download All (${encryptedResults.length} files)
-    `;
-  }
-
   if (errors > 0) {
     successText.textContent = `${encryptedResults.length} of ${selectedFiles.length} files protected (${errors} failed)`;
   } else {
     successText.textContent = selectedFiles.length === 1
       ? 'File protected!'
       : `All ${encryptedResults.length} files protected!`;
+  }
+
+  // Auto-download all protected files
+  for (const result of encryptedResults) {
+    triggerDownload(result.blob, result.name);
+  }
+
+  // Update button text for manual re-download
+  if (encryptedResults.length === 1) {
+    downloadBtn.textContent = `Download again`;
+  } else {
+    downloadBtn.innerHTML = `
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 3v10m0 0l-4-4m4 4l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 14v2a2 2 0 002 2h10a2 2 0 002-2v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Download again (${encryptedResults.length} files)
+    `
   }
 });
 
