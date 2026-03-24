@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Password Protector</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>PDF Password Protector</h1>
+      <p class="subtitle">Protect your PDFs with a password — entirely in your browser.</p>
+      <p class="privacy-badge">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 1L2 4v4c0 3.5 2.6 6.8 6 7.5 3.4-.7 6-4 6-7.5V4L8 1z" fill="currentColor" opacity="0.2" stroke="currentColor" stroke-width="1.2"/>
+          <path d="M6 8l1.5 1.5L10.5 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Your files never leave your browser
+      </p>
+    </header>
+
+    <!-- Step 1: Upload -->
+    <section id="upload-section" class="step">
+      <div id="drop-zone" class="drop-zone">
+        <div class="drop-zone-content">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M24 32V16m0 0l-6 6m6-6l6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8 32v4a4 4 0 004 4h24a4 4 0 004-4v-4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <p>Drag & drop PDFs here</p>
+          <p class="drop-zone-hint">Max 5 files, 50MB each</p>
+          <button type="button" id="browse-btn" class="btn-browse">Browse Files</button>
+        </div>
+        <input type="file" id="file-input" accept=".pdf,application/pdf" multiple hidden>
+      </div>
+      <noscript>
+        <p class="error-message" style="margin-top:1rem">JavaScript is required. Please make sure you're accessing this page via <code>http://localhost:8080</code>, not by opening the HTML file directly.</p>
+      </noscript>
+
+      <div id="file-list" class="file-list" hidden>
+        <!-- File items injected by JS -->
+      </div>
+    </section>
+
+    <!-- Step 2: Password -->
+    <section id="password-section" class="step" hidden>
+      <label for="password-input" class="input-label">Password</label>
+      <div class="password-wrapper">
+        <input type="password" id="password-input" placeholder="Enter a password" autocomplete="new-password">
+        <button type="button" id="toggle-password" class="toggle-password" aria-label="Show password">
+          <svg id="eye-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 4C4 4 1 10 1 10s3 6 9 6 9-6 9-6-3-6-9-6z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.5"/>
+          </svg>
+        </button>
+      </div>
+      <div id="password-strength" class="password-strength"></div>
+
+      <label for="confirm-password-input" class="input-label">Confirm Password</label>
+      <div class="password-wrapper">
+        <input type="password" id="confirm-password-input" placeholder="Re-enter password" autocomplete="new-password">
+      </div>
+      <div id="password-match" class="password-match"></div>
+    </section>
+
+    <!-- Step 3: Action -->
+    <section id="action-section" class="step" hidden>
+      <button id="protect-btn" class="btn-primary" disabled>
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="3" y="9" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M6 9V6a4 4 0 018 0v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Protect PDFs
+      </button>
+    </section>
+
+    <!-- Progress -->
+    <section id="progress-section" class="step" hidden>
+      <div class="progress-container">
+        <div id="progress-bar" class="progress-bar"></div>
+      </div>
+      <p id="progress-text" class="progress-text">Encrypting...</p>
+    </section>
+
+    <!-- Step 4: Download -->
+    <section id="download-section" class="step" hidden>
+      <div class="success-message">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="16" cy="16" r="12" fill="#22c55e" opacity="0.15"/>
+          <path d="M11 16l3.5 3.5L21 13" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <p id="success-text">All PDFs protected!</p>
+      </div>
+      <button id="download-btn" class="btn-primary btn-download">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 3v10m0 0l-4-4m4 4l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M3 14v2a2 2 0 002 2h10a2 2 0 002-2v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Download Protected PDFs
+      </button>
+      <button id="reset-btn" class="btn-secondary">Start Over</button>
+    </section>
+
+    <!-- Error -->
+    <div id="error-message" class="error-message" hidden></div>
+  </div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "pdf-lib": "https://esm.sh/pdf-lib@1.17.1",
+      "@pdfsmaller/pdf-encrypt-lite": "https://esm.sh/@pdfsmaller/pdf-encrypt-lite",
+      "jszip": "https://esm.sh/jszip@3.10.1"
+    }
+  }
+  </script>
+  <script type="module" src="js/encrypt.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
